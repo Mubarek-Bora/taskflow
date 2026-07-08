@@ -3,14 +3,9 @@ import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth";
 import { updateProjectSchema } from "@/lib/validation/project";
 import { ApiError, errorResponse } from "@/lib/api-error";
+import { getOwnedProject } from "@/lib/projects";
 
 type RouteParams = { params: Promise<{ id: string }> };
-
-async function getOwnedProject(id: string, userId: string) {
-  const project = await prisma.project.findFirst({ where: { id, ownerId: userId, deletedAt: null } });
-  if (!project) throw new ApiError(404, "Project not found");
-  return project;
-}
 
 export async function GET(_request: NextRequest, { params }: RouteParams) {
   try {
