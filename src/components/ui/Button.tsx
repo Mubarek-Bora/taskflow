@@ -3,7 +3,8 @@ import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const variants = {
-  primary: "bg-primary text-primary-foreground hover:opacity-90",
+  primary:
+    "bg-gradient-to-r from-gradient-from via-gradient-via to-gradient-to text-white shadow-md shadow-primary/20 hover:shadow-lg hover:shadow-primary/40 hover:brightness-110",
   secondary: "bg-muted text-foreground hover:bg-border",
   outline: "border border-border text-foreground hover:bg-muted",
   ghost: "text-foreground hover:bg-muted",
@@ -29,9 +30,10 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         ref={ref}
         disabled={disabled || isLoading}
         className={cn(
-          "inline-flex items-center justify-center gap-2 rounded-[var(--radius-default)] font-medium transition-colors",
+          "inline-flex items-center justify-center gap-2 rounded-[var(--radius-default)] font-medium transition-all duration-150",
+          "hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98]",
           "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-          "disabled:opacity-50 disabled:pointer-events-none",
+          "disabled:opacity-50 disabled:pointer-events-none disabled:translate-y-0 disabled:hover:shadow-none",
           variants[variant],
           sizes[size],
           className

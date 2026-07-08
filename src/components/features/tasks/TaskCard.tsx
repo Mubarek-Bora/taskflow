@@ -15,6 +15,12 @@ const STATUS_LABEL: Record<TaskStatus, string> = {
   DONE: "Done",
 };
 
+const STATUS_BORDER: Record<TaskStatus, string> = {
+  TODO: "border-l-sky-500",
+  IN_PROGRESS: "border-l-amber-500",
+  DONE: "border-l-emerald-500",
+};
+
 interface TaskCardProps {
   task: Task;
   projectId: string;
@@ -48,7 +54,12 @@ export function TaskCard({ task, projectId, onEdit }: TaskCardProps) {
   };
 
   return (
-    <Card className="p-4">
+    <Card
+      className={cn(
+        "border-l-4 p-4 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md",
+        STATUS_BORDER[task.status]
+      )}
+    >
       <div className="flex items-start justify-between gap-2">
         <p className="text-sm font-medium text-foreground">{task.title}</p>
         <div className="flex shrink-0 gap-1">

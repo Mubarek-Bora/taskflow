@@ -26,7 +26,8 @@ export function ProjectCard({ project, onEdit }: ProjectCardProps) {
   };
 
   return (
-    <Card className="flex flex-col p-5">
+    <Card className="group relative flex flex-col overflow-hidden p-5 transition-all duration-200 hover:-translate-y-1 hover:border-primary/40 hover:shadow-xl hover:shadow-primary/10">
+      <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-gradient-from via-gradient-via to-gradient-to opacity-0 transition-opacity duration-200 group-hover:opacity-100" />
       <div className="flex items-start justify-between gap-2">
         <Link
           href={`/dashboard/projects/${project.id}`}
@@ -59,7 +60,7 @@ export function ProjectCard({ project, onEdit }: ProjectCardProps) {
         <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">{project.description}</p>
       )}
 
-      <div className="mt-4 flex items-center gap-1.5 text-xs text-muted-foreground">
+      <div className="mt-4 flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary w-fit">
         <ListTodo className="h-3.5 w-3.5" />
         <span>
           {project._count.tasks} {project._count.tasks === 1 ? "task" : "tasks"}
