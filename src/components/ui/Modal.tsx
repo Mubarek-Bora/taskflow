@@ -2,8 +2,10 @@
 
 import { useEffect, type ReactNode } from "react";
 import { createPortal } from "react-dom";
+import { AnimatePresence, motion } from "framer-motion";
 import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useHasMounted } from "@/hooks/useHasMounted";
 
 interface ModalProps {
   open: boolean;
@@ -14,6 +16,8 @@ interface ModalProps {
 }
 
 export function Modal({ open, onClose, title, children, className }: ModalProps) {
+  const mounted = useHasMounted();
+
   useEffect(() => {
     if (!open) return;
     const onKeyDown = (e: KeyboardEvent) => {
@@ -27,36 +31,52 @@ export function Modal({ open, onClose, title, children, className }: ModalProps)
     };
   }, [open, onClose]);
 
-  if (!open) return null;
+  if (!mounted) return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
-      <div className="fixed inset-0 bg-black/50" onClick={onClose} aria-hidden="true" />
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="modal-title"
-        className={cn(
-          "relative z-10 w-full max-w-md rounded-[var(--radius-default)] border border-border bg-card p-6 shadow-lg",
-          className
-        )}
-      >
-        <div className="mb-4 flex items-center justify-between">
-          <h2 id="modal-title" className="text-lg font-semibold text-foreground">
-            {title}
-          </h2>
-          <button
-            type="button"
+    <AnimatePresence>
+      {open && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+          <motion.div
+            className="fixed inset-0 bg-black/50"
             onClick={onClose}
-            aria-label="Close"
-            className="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+            aria-hidden="true"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.15 }}
+          />
+          <motion.div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="modal-title"
+            className={cn(
+              "relative z-10 w-full max-w-md rounded-[var(--radius-default)] border border-border bg-card p-6 shadow-lg",
+              className
+            )}
+            initial={{ opacity: 0, scale: 0.95, y: 10 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 10 }}
+            transition={{ duration: 0.15 }}
           >
-            <X className="h-5 w-5" />
-          </button>
+            <div className="mb-4 flex items-center justify-between">
+              <h2 id="modal-title" className="text-lg font-semibold text-foreground">
+                {title}
+              </h2>
+              <button
+                type="button"
+                onClick={onClose}
+                aria-label="Close"
+                className="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            {children}
+          </motion.div>
         </div>
-        {children}
-      </div>
-    </div>,
+      )}
+    </AnimatePresence>,
     document.body
   );
 }

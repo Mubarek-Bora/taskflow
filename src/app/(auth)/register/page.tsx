@@ -29,7 +29,7 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="flex min-h-svh items-center justify-center bg-background px-4">
+    <div className="flex flex-1 items-center justify-center bg-background px-4">
       <Card className="w-full max-w-sm p-8">
         <h1 className="mb-1 text-2xl font-semibold text-foreground">Create your account</h1>
         <p className="mb-6 text-sm text-muted-foreground">Start organizing your projects with TaskFlow</p>

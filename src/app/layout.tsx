@@ -13,13 +13,30 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+const title = "TaskFlow — Project & Task Management";
+const description =
+  "TaskFlow is a modern task and project tracker: organize projects, manage tasks on a Kanban board, and stay on top of deadlines.";
+
 export const metadata: Metadata = {
+  metadataBase: new URL(siteUrl),
   title: {
-    default: "TaskFlow — Project & Task Management",
+    default: title,
     template: "%s | TaskFlow",
   },
-  description:
-    "TaskFlow is a modern task and project tracker: organize projects, manage tasks on a Kanban board, and stay on top of deadlines.",
+  description,
+  openGraph: {
+    title,
+    description,
+    url: siteUrl,
+    siteName: "TaskFlow",
+    type: "website",
+  },
+  twitter: {
+    card: "summary",
+    title,
+    description,
+  },
 };
 
 export default function RootLayout({
