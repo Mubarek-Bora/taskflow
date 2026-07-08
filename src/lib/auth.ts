@@ -7,8 +7,8 @@ import { ApiError } from "./api-error";
 export const ACCESS_TOKEN_TTL_SECONDS = 15 * 60; // 15 minutes
 export const REFRESH_TOKEN_TTL_SECONDS = 7 * 24 * 60 * 60; // 7 days
 
-const ACCESS_COOKIE = "taskflow_access";
-const REFRESH_COOKIE = "taskflow_refresh";
+export const ACCESS_COOKIE = "taskflow_access";
+export const REFRESH_COOKIE = "taskflow_refresh";
 
 function requireEnv(name: string): string {
   const value = process.env[name];
