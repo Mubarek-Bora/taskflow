@@ -1,13 +1,7 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { registerSchema } from "@/lib/validation/auth";
-import {
-  hashPassword,
-  signAccessToken,
-  generateRefreshToken,
-  setAuthCookies,
-  REFRESH_TOKEN_TTL_SECONDS,
-} from "@/lib/auth";
+import { hashPassword, issueSession } from "@/lib/auth";
 import { ApiError, errorResponse } from "@/lib/api-error";
 import { rateLimit, clientIp } from "@/lib/rate-limit";
 import { logger } from "@/lib/logger";
@@ -33,16 +27,7 @@ export async function POST(request: NextRequest) {
     const passwordHash = await hashPassword(password);
     const user = await prisma.user.create({ data: { name, email, passwordHash } });
 
-    const accessToken = await signAccessToken({ sub: user.id, email: user.email, role: user.role });
-    const { token: refreshToken, tokenHash } = generateRefreshToken();
-    await prisma.refreshToken.create({
-      data: {
-        tokenHash,
-        userId: user.id,
-        expiresAt: new Date(Date.now() + REFRESH_TOKEN_TTL_SECONDS * 1000),
-      },
-    });
-    await setAuthCookies(accessToken, refreshToken);
+    await issueSession(user);
 
     logger.info("User registered", { userId: user.id });
 

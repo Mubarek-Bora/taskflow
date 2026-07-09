@@ -1,8 +1,8 @@
 # TaskFlow
 
 A full-stack task and project tracker: projects, a Kanban-style task board (To Do / In
-Progress / Done), JWT authentication with refresh-token rotation, dark mode, and a
-responsive dashboard UI.
+Progress / Done), JWT authentication with refresh-token rotation and Google/GitHub
+OAuth, dark mode, and a responsive dashboard UI.
 
 ## Tech stack
 
@@ -48,6 +48,32 @@ npm run dev
 
 Visit http://localhost:3000.
 
+## OAuth setup (optional)
+
+The app works fully with email/password without this — the Google/GitHub buttons on
+the login page will just show an error until you configure them. To enable them:
+
+### Google
+1. Go to [Google Cloud Console](https://console.cloud.google.com/) → APIs & Services →
+   Credentials → **Create Credentials → OAuth client ID**.
+2. Application type: **Web application**.
+3. Under **Authorized redirect URIs**, add exactly:
+   `http://localhost:3000/api/auth/oauth/google/callback`
+   (swap the host for your real domain in production, matching `NEXT_PUBLIC_SITE_URL`).
+4. Copy the generated **Client ID** and **Client secret** into `.env` as
+   `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET`.
+
+### GitHub
+1. Go to GitHub → Settings → Developer settings → **OAuth Apps → New OAuth App**.
+2. **Authorization callback URL**, add exactly:
+   `http://localhost:3000/api/auth/oauth/github/callback`
+3. Copy the **Client ID**, generate a **Client secret**, and put both into `.env` as
+   `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET`.
+
+Restart the dev server after editing `.env`. If a redirect URI doesn't match exactly
+(including trailing slashes/http vs https), the provider will reject the request before
+it ever reaches the app.
+
 ## Scripts
 
 | Command | Description |
@@ -76,7 +102,7 @@ src/
     layout/                Nav / header components
     features/{projects,tasks}/   Feature-specific components
   hooks/                   React Query hooks (useAuth, useProjects, useTasks)
-  lib/                     auth.ts, prisma.ts, validation/, api-client.ts, ...
+  lib/                     auth.ts, prisma.ts, validation/, api-client.ts, oauth/, ...
   proxy.ts                 Route protection (Next.js 16's renamed middleware.ts)
 ```
 
@@ -85,6 +111,8 @@ src/
 All endpoints validate input with Zod and return `{ error, details? }` on failure.
 
 - `POST /api/auth/{register,login,refresh,logout}`, `GET /api/auth/me`
+- `GET /api/auth/oauth/[provider]/start`, `GET /api/auth/oauth/[provider]/callback`
+  (`provider` is `google` or `github`; these are full-page redirects, not fetch calls)
 - `GET/POST /api/projects`, `GET/PATCH/DELETE /api/projects/[id]`
 - `GET/POST /api/projects/[id]/tasks`, `GET/PATCH/DELETE /api/tasks/[id]`
 
@@ -107,14 +135,21 @@ checked server-side) and use soft delete (`deletedAt`) rather than hard deletes.
 - A per-IP in-memory rate limiter guards `/api/auth/*`. It's process-local — fine for
   this single-instance setup, but a real multi-instance deployment would need a shared
   store (Redis) instead.
+- OAuth uses the standard authorization-code flow with a random `state` value in a
+  short-lived, `httpOnly`, `SameSite=Lax` cookie (CSRF protection for the callback;
+  `Lax` — not `Strict` — is required here since the cookie must survive the top-level
+  redirect back from the provider's domain). A Google/GitHub sign-in only auto-links to
+  an *existing* email/password account if the provider reports that email as verified,
+  to prevent account takeover via an attacker registering an OAuth identity with
+  someone else's unverified email.
 
 ## What's deliberately out of scope (next phases)
 
 This was scoped as a working core app first, not the full enterprise checklist. Not
 implemented, but straightforward to add on top of the existing architecture:
 
-- OAuth (Google/GitHub), email verification, forgot/reset password (would need an email
-  provider)
+- Email verification, forgot/reset password (would need an email provider) — OAuth
+  (Google/GitHub) is now implemented
 - Admin dashboard: analytics, user/role management, activity logs
 - File uploads, CSV/PDF export, in-app notifications
 - Automated tests (unit/integration/E2E) — everything so far was verified manually via

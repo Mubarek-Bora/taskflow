@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from "react";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -11,6 +12,8 @@ import { Input } from "@/components/ui/Input";
 import { Label, FieldError } from "@/components/ui/Label";
 import { Card } from "@/components/ui/Card";
 import { ApiClientError } from "@/lib/api-client";
+import { OAuthButtons } from "@/components/features/auth/OAuthButtons";
+import { OAuthErrorToast } from "@/components/features/auth/OAuthErrorToast";
 
 export default function LoginPage() {
   const login = useLogin();
@@ -30,9 +33,20 @@ export default function LoginPage() {
 
   return (
     <div className="flex flex-1 items-center justify-center bg-background px-4">
+      <Suspense fallback={null}>
+        <OAuthErrorToast />
+      </Suspense>
       <Card className="w-full max-w-sm border-primary/10 p-8 shadow-xl shadow-primary/5">
         <h1 className="mb-1 text-2xl font-semibold text-foreground">Welcome back</h1>
         <p className="mb-6 text-sm text-muted-foreground">Log in to your TaskFlow account</p>
+
+        <OAuthButtons />
+
+        <div className="my-6 flex items-center gap-3">
+          <div className="h-px flex-1 bg-border" />
+          <span className="text-xs text-muted-foreground">OR</span>
+          <div className="h-px flex-1 bg-border" />
+        </div>
 
         <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-4">
           <div>

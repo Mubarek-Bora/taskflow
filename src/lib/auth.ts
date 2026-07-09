@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import { randomBytes, createHash } from "crypto";
 import { cookies } from "next/headers";
 import { ApiError } from "./api-error";
+import { prisma } from "./prisma";
 
 export const ACCESS_TOKEN_TTL_SECONDS = 15 * 60; // 15 minutes
 export const REFRESH_TOKEN_TTL_SECONDS = 7 * 24 * 60 * 60; // 7 days
@@ -71,6 +72,24 @@ export async function hashPassword(password: string): Promise<string> {
 
 export async function verifyPassword(password: string, hash: string): Promise<boolean> {
   return bcrypt.compare(password, hash);
+}
+
+/**
+ * Issues a full session (access + refresh token) for an already-resolved user and
+ * sets the auth cookies. Shared by register, login, and the OAuth callback so all
+ * three sign-in paths end up in the exact same session state.
+ */
+export async function issueSession(user: { id: string; email: string; role: UserRole }) {
+  const accessToken = await signAccessToken({ sub: user.id, email: user.email, role: user.role });
+  const { token: refreshToken, tokenHash } = generateRefreshToken();
+  await prisma.refreshToken.create({
+    data: {
+      tokenHash,
+      userId: user.id,
+      expiresAt: new Date(Date.now() + REFRESH_TOKEN_TTL_SECONDS * 1000),
+    },
+  });
+  await setAuthCookies(accessToken, refreshToken);
 }
 
 export async function setAuthCookies(accessToken: string, refreshToken: string) {

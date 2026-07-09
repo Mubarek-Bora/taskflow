@@ -24,7 +24,7 @@ enum TaskStatus {
 model User {
   id           String    @id @default(cuid())
   email        String    @unique
-  passwordHash String
+  passwordHash String?
   name         String
   role         Role      @default(USER)
 
@@ -33,10 +33,26 @@ model User {
   deletedAt    DateTime?
 
   refreshTokens RefreshToken[]
+  oauthAccounts OAuthAccount[]
   projects      Project[]      @relation("ProjectOwner")
   createdTasks  Task[]         @relation("TaskCreatedBy")
 
   @@map("users")
+}
+
+model OAuthAccount {
+  id                String   @id @default(cuid())
+  provider          String
+  providerAccountId String
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+  @@map("oauth_accounts")
 }
 
 model RefreshToken {
