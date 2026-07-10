@@ -1,5 +1,7 @@
 # TaskFlow
 
+[![CI](https://github.com/Mubarek-Bora/taskflow/actions/workflows/ci.yml/badge.svg)](https://github.com/Mubarek-Bora/taskflow/actions/workflows/ci.yml)
+
 A full-stack task and project tracker: projects, a Kanban-style task board (To Do / In
 Progress / Done), JWT authentication with refresh-token rotation and Google/GitHub
 OAuth, dark mode, and a responsive dashboard UI.
@@ -113,6 +115,17 @@ Two tiers, matching what's realistic to automate for a cookie-session app like t
 - **Not included**: a formal browser E2E suite (Playwright was used ad hoc for visual
   verification during development, not wired up as a permanent suite) and testing the
   real OAuth token exchange (needs live provider credentials — see OAuth setup above).
+
+### CI
+
+`.github/workflows/ci.yml` runs both suites on every push/PR to `master`: a fast
+`checks` job (typecheck, lint, unit tests) and an `integration` job (spins up a
+Postgres service container and runs the live-server integration suite). All env vars
+in the workflow are hardcoded dummy values — no GitHub Secrets to configure, nothing
+real is at risk since the Postgres container is ephemeral and OAuth's real token
+exchange isn't exercised by the tests. To require it pass before merging, turn on
+branch protection yourself under Settings → Branches (not something I can configure
+via API here).
 
 ## Project structure
 
