@@ -18,7 +18,12 @@ export async function GET(request: NextRequest) {
       ...(search ? { name: { contains: search, mode: "insensitive" as const } } : {}),
     };
 
-    const [items, total] = await Promise.all([
+    // $transaction (not Promise.all) so both queries run on the same
+    // connection/snapshot -- on a pooled serverless Postgres (Neon), two
+    // independently-acquired connections via Promise.all can occasionally
+    // disagree on very recently committed rows (count sees it, findMany
+    // doesn't), since each grabs its own connection from the pool.
+    const [items, total] = await prisma.$transaction([
       prisma.project.findMany({
         where,
         orderBy: { createdAt: "desc" as const },
