@@ -2,6 +2,8 @@
 
 [![CI](https://github.com/Mubarek-Bora/taskflow/actions/workflows/ci.yml/badge.svg)](https://github.com/Mubarek-Bora/taskflow/actions/workflows/ci.yml)
 
+**Live:** [taskflow-rose-one.vercel.app](https://taskflow-rose-one.vercel.app)
+
 A full-stack task and project tracker: projects, a Kanban-style task board (To Do / In
 Progress / Done), JWT authentication with refresh-token rotation and Google/GitHub
 OAuth, dark mode, and a responsive dashboard UI.
