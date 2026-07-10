@@ -192,15 +192,59 @@ implemented, but straightforward to add on top of the existing architecture:
   (Google/GitHub) is now implemented
 - Admin dashboard: analytics, user/role management, activity logs
 - File uploads, CSV/PDF export, in-app notifications
-- A formal browser E2E test suite (see Testing section) and CI/CD pipeline to run the
-  test suites automatically
+- A formal browser E2E test suite (see Testing section)
 - Production Docker image for the Next.js app itself (only the dev Postgres is
-  containerized via `docker-compose.yml`)
+  containerized via `docker-compose.yml`) — not needed for the Vercel deployment path
+  below, but relevant if you ever self-host on a VPS/ECS/App Runner instead
 
-## Deployment
+## Deployment (Vercel + Neon — free tier)
 
-The app reads all secrets from environment variables (see `.env.example`) and has no
-hardcoded config, so it's deployable as-is to any Node.js host once `DATABASE_URL`
-points at a real Postgres instance and `npm run build && npm run start` is run behind
-HTTPS. `docker-compose.yml` currently only provisions the dev database; containerizing
-the Next.js app itself is one of the deferred items above.
+The app reads all config from environment variables (see `.env.example`) with nothing
+hardcoded, so it's deployable as-is. Vercel (hosting) + Neon (Postgres) is the
+recommended path: both have a genuinely free tier (not just a trial), and Vercel is
+built by the Next.js team so there's zero framework-specific config needed.
+
+### 1. Database (Neon)
+1. Create a free project at [neon.tech](https://neon.tech).
+2. Copy the **pooled** connection string (not the direct one) — Neon's dashboard
+   labels it clearly, or the hostname contains `-pooler`. This matters because
+   Vercel runs the app as serverless functions: many concurrent short-lived instances
+   would otherwise exhaust Postgres's direct connection limit fast. Neon's pooler
+   (PgBouncer) is exactly what handles that. Append `?sslmode=require` if it isn't
+   already in the string — Neon requires TLS, and `pg` (this project's Postgres
+   driver) reads that from the connection string automatically.
+3. Run migrations against it from your machine before the first deploy:
+   ```bash
+   DATABASE_URL="<your Neon pooled connection string>" npx prisma migrate deploy
+   ```
+   Re-run this (pointed at Neon) any time you add a new migration going forward —
+   Vercel's build does **not** run migrations automatically.
+
+### 2. App (Vercel)
+1. Import the GitHub repo at [vercel.com/new](https://vercel.com/new) — it auto-detects
+   Next.js, no build settings to change.
+2. Under Project Settings → Environment Variables, set:
+   - `DATABASE_URL` — the Neon pooled connection string from step 1
+   - `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET` — long random strings, different from
+     your local `.env` values
+   - `NEXT_PUBLIC_SITE_URL` — leave as `http://localhost:3000` for the first deploy,
+     then update to the real `https://your-app.vercel.app` URL Vercel gives you and
+     redeploy (used for OAuth redirect URIs, sitemap, and OpenGraph tags)
+   - `GOOGLE_CLIENT_ID`/`SECRET`, `GITHUB_CLIENT_ID`/`SECRET` — optional; if set, also
+     add the production callback URLs
+     (`https://your-app.vercel.app/api/auth/oauth/{google,github}/callback`) to those
+     OAuth apps' settings (see OAuth setup above) — a provider will reject the request
+     if the redirect URI doesn't match exactly
+   - `NODE_ENV` — don't set this; Vercel sets it to `production` automatically, which
+     is what flips auth cookies to `secure: true`
+3. Deploy. `postinstall: prisma generate` (in `package.json`) runs automatically during
+   Vercel's build so the gitignored generated client exists — no manual step needed for
+   that part.
+
+### Known limitation once deployed
+The per-IP in-memory rate limiter on `/api/auth/*` (see Security notes) is scoped to a
+single process. On Vercel's serverless model that means each function instance has its
+own independent counter — the limiter still works, but it's not a strict *global* rate
+limit across the whole deployment the way it is in the single-process local/Docker
+setup. Not a blocker for a personal project; a real production API would want a shared
+store (Redis/Upstash) here instead.
