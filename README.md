@@ -86,6 +86,33 @@ it ever reaches the app.
 | `npm run db:generate` | Regenerate the Prisma client |
 | `npm run db:seed` | Seed the database |
 | `npm run db:studio` | Open Prisma Studio |
+| `npm test` | Unit tests (fast, no DB/server needed) |
+| `npm run test:watch` | Unit tests in watch mode |
+| `npm run test:integration` | Builds the app, then runs API/integration tests against a real, disposable test database + a real running server |
+| `npm run test:all` | Both suites |
+
+## Testing
+
+Two tiers, matching what's realistic to automate for a cookie-session app like this:
+
+- **Unit** (`tests/unit/`, Vitest, `npm test`) — pure functions: Zod validation
+  schemas, password hashing/JWT sign-verify/refresh-token hashing, the rate limiter,
+  pagination math, OAuth error-message mapping. No database, no server, runs in ~1s.
+- **Integration** (`tests/integration/`, `npm run test:integration`) — hits a real
+  `next start` server on port 3100 with real `fetch` calls against a disposable
+  `taskflow_test` Postgres database (dropped and recreated fresh on every run by
+  `tests/integration/setup/global-setup.ts`). This is deliberate: auth here goes
+  through `next/headers` cookies tied to Next's request-scoped context, which can't be
+  faked by importing route handlers directly and calling them — a live server is the
+  only way to exercise it faithfully. `tests/integration/helpers/client.ts` is a small
+  cookie-jar `fetch` wrapper that automates the same register → login → me → refresh →
+  logout / ownership-isolation checks that were done by hand with `curl` throughout
+  this project's development.
+- Requires `DATABASE_URL_TEST` in `.env` (see `.env.example`) pointing at a second,
+  disposable database on the same Postgres instance.
+- **Not included**: a formal browser E2E suite (Playwright was used ad hoc for visual
+  verification during development, not wired up as a permanent suite) and testing the
+  real OAuth token exchange (needs live provider credentials — see OAuth setup above).
 
 ## Project structure
 
@@ -152,9 +179,8 @@ implemented, but straightforward to add on top of the existing architecture:
   (Google/GitHub) is now implemented
 - Admin dashboard: analytics, user/role management, activity logs
 - File uploads, CSV/PDF export, in-app notifications
-- Automated tests (unit/integration/E2E) — everything so far was verified manually via
-  `curl` (API) and Playwright screenshots (UI), not an automated suite
-- CI/CD pipeline
+- A formal browser E2E test suite (see Testing section) and CI/CD pipeline to run the
+  test suites automatically
 - Production Docker image for the Next.js app itself (only the dev Postgres is
   containerized via `docker-compose.yml`)
 

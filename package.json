@@ -10,7 +10,11 @@
     "db:migrate": "prisma migrate dev",
     "db:generate": "prisma generate",
     "db:seed": "prisma db seed",
-    "db:studio": "prisma studio"
+    "db:studio": "prisma studio",
+    "test": "vitest run --config vitest.config.ts",
+    "test:watch": "vitest --config vitest.config.ts",
+    "test:integration": "next build && vitest run --config vitest.integration.config.ts",
+    "test:all": "npm run test && npm run test:integration"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.4.0",
@@ -40,11 +44,13 @@
     "@types/pg": "^8.20.0",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@vitest/coverage-v8": "^4.1.10",
     "dotenv": "^17.4.2",
     "eslint": "^9",
     "eslint-config-next": "16.2.10",
     "tailwindcss": "^4",
     "tsx": "^4.23.0",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^4.1.10"
   }
 }
